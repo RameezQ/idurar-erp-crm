@@ -7,6 +7,7 @@ const custom = require('@/controllers/pdfController');
 const { calculate } = require('@/helpers');
 
 const create = async (req, res) => {
+  console.log(req.body)
   // Creating a new document in the collection
   if (req.body.amount === 0) {
     return res.status(202).json({

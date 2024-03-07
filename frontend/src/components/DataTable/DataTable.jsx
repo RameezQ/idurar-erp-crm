@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   EyeOutlined,
@@ -8,8 +8,10 @@ import {
   RedoOutlined,
   ArrowRightOutlined,
   ArrowLeftOutlined,
+  FileOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Table, Button, Input } from 'antd';
+import { Dropdown, Table, Button, Input, Form, Row, Col } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -23,6 +25,7 @@ import { generate as uniqueId } from 'shortid';
 
 import { useCrudContext } from '@/context/crud';
 import { selectLangDirection } from '@/redux/translate/selectors';
+import { ProTable } from '@ant-design/pro-components';
 
 function AddNewItem({ config }) {
   const { crudContextAction } = useCrudContext();
@@ -176,13 +179,14 @@ export default function DataTable({ config, extra = [] }) {
     };
   }, []);
 
-  const langDirection=useSelector(selectLangDirection)
-
+  const langDirection = useSelector(selectLangDirection);
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
   return (
     <>
       <PageHeader
         onBack={() => window.history.back()}
-        backIcon={langDirection==="rtl"?<ArrowRightOutlined/>:<ArrowLeftOutlined />}
+        backIcon={langDirection === 'rtl' ? <ArrowRightOutlined /> : <ArrowLeftOutlined />}
         title={DATATABLE_TITLE}
         ghost={false}
         extra={[
@@ -192,6 +196,15 @@ export default function DataTable({ config, extra = [] }) {
             placeholder={translate('search')}
             allowClear
           />,
+          // <Button
+          //   key={'12rfv'}
+          //   type="primary"
+          //   ghost
+          //   icon={<FilterOutlined />}
+          //   onClick={() => setOpen(true)}
+          // >
+          //   Filter
+          // </Button>,
           <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
             {translate('Refresh')}
           </Button>,
@@ -200,18 +213,37 @@ export default function DataTable({ config, extra = [] }) {
         ]}
         style={{
           padding: '20px 0px',
-          direction:langDirection
+          direction: langDirection,
         }}
       ></PageHeader>
 
-      <Table
+      <ProTable
+        formRef={ref}
+        size="small"
         columns={dataTableColumns}
         rowKey={(item) => item._id}
         dataSource={dataSource}
         pagination={pagination}
         loading={listIsLoading}
+        toolBarRender={false}
         onChange={handelDataTableLoad}
         scroll={{ x: true }}
+        request={async (params) => {
+          const options = {
+            page: params.current || 1,
+            items: params.pageSize || 10,
+            keyword: params.keyword,
+            ...params,
+          };
+
+          dispatch(crud.list({ entity, options }));
+          return {
+            data: dataSource, // Pass the data to ProTable
+            success: true,
+            total: pagination.total || 0, // Pass the total count to ProTable
+          };
+        }}
+        // params={{ keyword: '', ...config.searchConfig?.defaultValues }} // Set initial filter values
       />
     </>
   );

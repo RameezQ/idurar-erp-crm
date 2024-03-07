@@ -33,7 +33,6 @@ const paginatedList = async (userModel, req, res) => {
   // Counting the total documents
   const countPromise = User.countDocuments({
     removed: false,
-
     [filter]: equal,
     ...fields,
   });
@@ -42,7 +41,7 @@ const paginatedList = async (userModel, req, res) => {
   // Calculating total pages
   const pages = Math.ceil(count / limit);
 
-  // Getting Pagination Object
+  console.log(result?.length);
   const pagination = { page, pages, count };
   if (count > 0) {
     return res.status(200).json({

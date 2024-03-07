@@ -2,7 +2,7 @@ const express = require('express');
 
 const cors = require('cors');
 const compression = require('compression');
-
+const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
@@ -24,7 +24,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use(morgan('tiny'));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

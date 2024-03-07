@@ -3,7 +3,7 @@ import AdminCrudModule from '@/modules/AdminCrudModule';
 import AdminForm from '@/forms/AdminForm';
 import { Switch, Tag } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
-
+import { filter } from './config';
 const roleColr = {
   owner: 'gold',
   admin: 'magenta',
@@ -32,9 +32,9 @@ export default function Admin() {
   ];
 
   const dataTableColumns = [
-    { title: translate('first name'), dataIndex: 'name' },
-    { title: translate('last name'), dataIndex: 'surname' },
-    { title: translate('Email'), dataIndex: 'email' },
+    { title: translate('first name'), dataIndex: 'name', key: 'name' },
+    { title: translate('last name'), dataIndex: 'surname', key: 'surname' },
+    { title: translate('Email'), dataIndex: 'email', key: 'email' },
     {
       title: translate('role'),
       dataIndex: 'role',
@@ -68,7 +68,6 @@ export default function Admin() {
     DATATABLE_TITLE: translate('admin_list'),
     ADD_NEW_ENTITY: translate('add_new_admin'),
     ENTITY_NAME: translate('admin'),
-
     RECORD_ENTITY: translate('record_payment'),
   };
 
@@ -81,6 +80,7 @@ export default function Admin() {
     readColumns,
     dataTableColumns,
     searchConfig,
+    filter,
     deleteModalLabels,
   };
   return (
