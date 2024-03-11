@@ -163,7 +163,7 @@ export default function DataTable({ config, extra = [] }) {
 
   const filterTable = (e) => {
     const value = e.target.value;
-    const options = { q: value, fields: searchConfig?.searchFields || '' };
+    const options = { keyword: value, fields: searchConfig?.searchFields || '' };
     dispatch(crud.list({ entity, options }));
   };
 
@@ -171,13 +171,13 @@ export default function DataTable({ config, extra = [] }) {
     dispatch(crud.list({ entity }));
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    dispatcher();
-    return () => {
-      controller.abort();
-    };
-  }, []);
+  // useEffect(() => {
+  //   const controller = new AbortController();
+  //   dispatcher();
+  //   return () => {
+  //     controller.abort();
+  //   };
+  // }, []);
 
   const langDirection = useSelector(selectLangDirection);
   const [open, setOpen] = useState(false);
@@ -220,6 +220,7 @@ export default function DataTable({ config, extra = [] }) {
       <ProTable
         formRef={ref}
         size="small"
+        // loading={l}
         columns={dataTableColumns}
         rowKey={(item) => item._id}
         dataSource={dataSource}
@@ -232,7 +233,7 @@ export default function DataTable({ config, extra = [] }) {
           const options = {
             page: params.current || 1,
             items: params.pageSize || 10,
-            keyword: params.keyword,
+            keyword: params.keyword || '',
             ...params,
           };
 
