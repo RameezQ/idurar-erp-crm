@@ -53,6 +53,11 @@ const AppNav = ({ translate }) => [
     label: <Link to={'/invoice'}>{translate('invoice')}</Link>,
   },
   {
+    key: 'fond',
+    icon: <ContainerOutlined />,
+    label: <Link to={'/fond'}>{translate('fond')}</Link>,
+  },
+  {
     key: 'quote',
     icon: <FileSyncOutlined />,
     label: <Link to={'/quote'}>{translate('quote')}</Link>,
@@ -77,11 +82,11 @@ const AppNav = ({ translate }) => [
     icon: <TagsOutlined />,
     label: <Link to={'/category/product'}>{translate('product_category')}</Link>,
   },
-  // {
-  //   key: 'employee',
-  //   icon: <UserOutlined />,
-  //   label: <Link to={'/employee'}>{translate('employee')}</Link>,
-  // },
+  {
+    key: 'employee',
+    icon: <UserOutlined />,
+    label: <Link to={'/employee'}>{translate('employee')}</Link>,
+  },
 
   {
     label: translate('Settings'),
@@ -101,10 +106,10 @@ const AppNav = ({ translate }) => [
         key: 'expensesCategory',
         label: <Link to={'/category/expenses'}>{translate('expenses_Category')}</Link>,
       },
-      // {
-      //   key: 'emailTemplates',
-      //   label: <Link to={'/email'}>{translate('email_templates')}</Link>,
-      // },
+      {
+        key: 'emailTemplates',
+        label: <Link to={'/email'}>{translate('email_templates')}</Link>,
+      },
       {
         key: 'paymentMode',
         label: <Link to={'/payment/mode'}>{translate('payment_mode')}</Link>,
@@ -117,10 +122,10 @@ const AppNav = ({ translate }) => [
         key: 'about',
         label: <Link to={'/about'}>{translate('about')}</Link>,
       },
-      // {
-      //   key: 'advancedSettings',
-      //   label: <Link to={'/settings/advanced'}>{translate('advanced_settings')}</Link>,
-      // },
+      {
+        key: 'advancedSettings',
+        label: <Link to={'/settings/advanced'}>{translate('advanced_settings')}</Link>,
+      },
     ],
   },
 ];

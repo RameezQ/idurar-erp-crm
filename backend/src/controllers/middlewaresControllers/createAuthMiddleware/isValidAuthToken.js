@@ -49,6 +49,10 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
     else {
       const reqUserName = userModel.toLowerCase();
       req[reqUserName] = user;
+      if (req.method === 'POST') {
+        req.body.createdBy = user._id;
+        // req.body.createdByBranch = currLocation?._id;
+      }
       next();
     }
   } catch (error) {

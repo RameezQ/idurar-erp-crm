@@ -1,9 +1,14 @@
 import dayjs from 'dayjs';
-import { Switch, Tag } from 'antd';
+import { Select, Switch, Tag } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { countryList } from '@/utils/countryList';
 import { generate as uniqueId } from 'shortid';
 import color from '@/utils/color';
+import { useState } from 'react';
+import errorHandler from '@/request/errorHandler';
+import axios from 'axios';
+// import { MyFilterSelect } from './helpers';
+// import FilterSearch from './FilterSearch';
 
 export const dataForRead = ({ fields, translate }) => {
   let columns = [];
@@ -22,15 +27,33 @@ export const dataForRead = ({ fields, translate }) => {
 
 export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) {
   let columns = [];
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  const handleSearch = async (value, props) => {
+    if (value !== '') {
+      setLoading(true);
+      let params = { q: value, fields: props.fields };
+      try {
+        const res = await axios.get(props.route, { params });
+        const data = res.data.result;
+        setOptions(data);
+      } catch (error) {
+        errorHandler(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
   Object.keys(fields).forEach((key) => {
     let field = fields[key];
-    const keyIndex = field.dataIndex ? field.dataIndex : [key];
+    const keyIndex = field.key || field.dataIndex ? field.dataIndex : [key];
 
     const component = {
       boolean: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         onCell: () => ({
           props: {
             style: {
@@ -49,6 +72,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       date: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           const date = dayjs(record[key]).format(dateFormat);
           return (
@@ -61,6 +85,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       currency: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         onCell: () => {
           return {
             style: {
@@ -75,6 +100,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       async: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (text, record) => {
           return (
             <Tag bordered={false} color={field.color || record[key]?.color || record.color}>
@@ -86,6 +112,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       color: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (text, record) => {
           return (
             <Tag bordered={false} color={text}>
@@ -97,6 +124,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       stringWithColor: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (text, record) => {
           return (
             <Tag bordered={false} color={record.color || field.color}>
@@ -108,6 +136,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       tag: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           return (
             <Tag bordered={false} color={field.color}>
@@ -119,6 +148,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       selectWithFeedback: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (text, record) => {
           if (field.renderAsTag) {
             const selectedOption = field.options.find((x) => x.value === record[key]);
@@ -134,6 +164,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       select: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           if (field.renderAsTag) {
             const selectedOption = field.options.find((x) => x.value === record[key]);
@@ -149,6 +180,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       selectWithTranslation: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           if (field.renderAsTag) {
             const selectedOption = field.options.find((x) => x.value === record[key]);
@@ -164,6 +196,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       array: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           return record[key].map((x) => (
             <Tag bordered={false} key={`${uniqueId()}`} color={field.colors[x]}>
@@ -175,9 +208,9 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
       country: {
         title: field.label ? translate(field.label) : translate(key),
         dataIndex: keyIndex,
+        key: keyIndex,
         render: (_, record) => {
           const selectedCountry = countryList.find((obj) => obj.value === record[key]);
-
           return (
             <Tag bordered={false} color={field.color || undefined}>
               {selectedCountry?.icon && selectedCountry?.icon + ' '}
@@ -191,6 +224,27 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat }) 
     const defaultComponent = {
       title: field.label ? translate(field.label) : translate(key),
       dataIndex: keyIndex,
+      key: field.key || keyIndex,
+      renderFormItem: (item, { type, defaultRender, ...rest }, form) => {
+        console.log(item);
+        return field.selectProps ? (
+          <Select
+            options={options?.map((item) => ({
+              label: item[field.selectProps.name],
+              value: item._id,
+              key: item._id,
+            }))}
+            onSearch={(e) => handleSearch(e, field.selectProps)}
+            showSearch
+            optionFilterProp="children"
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+          />
+        ) : (
+          defaultRender(item)
+        );
+      },
     };
 
     const type = field.type;

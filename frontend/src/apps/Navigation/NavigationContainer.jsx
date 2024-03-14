@@ -87,6 +87,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/invoice'}>{translate('invoices')}</Link>,
     },
     {
+      key: 'fond',
+      icon: <ContainerOutlined />,
+      label: <Link to={'/fond'}>{translate('fond')}</Link>,
+    },
+    {
       key: 'quote',
       icon: <FileSyncOutlined />,
       label: <Link to={'/quote'}>{translate('proforma invoices')}</Link>,
@@ -117,11 +122,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       icon: <ReconciliationOutlined />,
       label: <Link to={'/category/expenses'}>{translate('expenses_Category')}</Link>,
     },
-    // {
-    //   key: 'employee',
-    //   icon: <UserOutlined />,
-    //   label: <Link to={'/employee'}>{translate('employee')}</Link>,
-    // },
+    {
+      key: 'employee',
+      icon: <UserOutlined />,
+      label: <Link to={'/employee'}>{translate('employee')}</Link>,
+    },
 
     {
       label: translate('Settings'),
@@ -142,10 +147,10 @@ function Sidebar({ collapsible, isMobile = false }) {
           label: <Link to={'/settings/currency'}>{translate('currencies')}</Link>,
         },
 
-        // {
-        //   key: 'emailTemplates',
-        //   label: <Link to={'/email'}>{translate('email_templates')}</Link>,
-        // },
+        {
+          key: 'emailTemplates',
+          label: <Link to={'/email'}>{translate('email_templates')}</Link>,
+        },
         {
           key: 'paymentMode',
           label: <Link to={'/payment/mode'}>{translate('payments_mode')}</Link>,
@@ -186,7 +191,7 @@ function Sidebar({ collapsible, isMobile = false }) {
     navMenu.collapse();
   };
 
-  const langDirection=useSelector(selectLangDirection)
+  const langDirection = useSelector(selectLangDirection);
   return (
     <Sider
       collapsible={collapsible}
@@ -197,13 +202,13 @@ function Sidebar({ collapsible, isMobile = false }) {
       style={{
         overflow: 'auto',
         height: '100vh',
-        direction:langDirection,
-        position:isMobile?"absolute":"relative",
+        direction: langDirection,
+        position: isMobile ? 'absolute' : 'relative',
         bottom: '20px',
         ...(!isMobile && {
           background: 'none',
           border: 'none',
-          [langDirection==="rtl"?"right":"left"]: '20px',
+          [langDirection === 'rtl' ? 'right' : 'left']: '20px',
           top: '20px',
           borderRadius: '8px',
         }),
@@ -255,7 +260,7 @@ function MobileSidebar() {
     setVisible(false);
   };
 
-  const langDirection=useSelector(selectLangDirection)
+  const langDirection = useSelector(selectLangDirection);
   return (
     <>
       <Button
@@ -263,9 +268,7 @@ function MobileSidebar() {
         size="large"
         onClick={showDrawer}
         className="mobile-sidebar-btn"
-
-        
-        style={{ [langDirection==="rtl"?"marginRight":"marginLeft"]: 25 }}
+        style={{ [langDirection === 'rtl' ? 'marginRight' : 'marginLeft']: 25 }}
       >
         <MenuOutlined style={{ fontSize: 18 }} />
       </Button>
@@ -275,16 +278,13 @@ function MobileSidebar() {
           boxShadow: 'none',
         }}
         style={{ backgroundColor: 'rgba(255, 255, 255, 0)' }}
-        placement={langDirection==="rtl"?"right":"left"}
-
+        placement={langDirection === 'rtl' ? 'right' : 'left'}
         closable={false}
         onClose={onClose}
         open={visible}
-
       >
         <Sidebar collapsible={false} isMobile={true} />
       </Drawer>
-      
     </>
   );
 }

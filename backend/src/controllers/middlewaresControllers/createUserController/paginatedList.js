@@ -1,159 +1,122 @@
 const mongoose = require('mongoose');
-const { ObjectId } = require('mongodb');
 const moment = require('moment');
 const isValidObjectId = (value) => {
   return /^[a-f\d]{24}$/i.test(value);
 };
-const getPagination = (current, pageSize) => {
-  const page = parseInt(current) || 1;
-  const size = parseInt(pageSize) || 10;
-  const skip = page * size - size;
+const paginatedList = async (userModel, req, res) => {
+  const Model = mongoose.model(userModel);
+  const page = req.query.page || 1;
+  const limit = parseInt(req.query.items) || 10;
+  const skip = page * limit - limit;
 
-  return { page, pageSize: size, skip };
-};
-const findMatchingIds = async (model, fields, searchTerm) => {
-  const uniqueIds = [];
+  const { sortBy = 'enabled', sortValue = -1, filter, equal } = req.query;
 
-  for (const field of fields) {
-    const fieldType = model.schema.obj[field].type;
+  const fieldsArray = req.query.fields ? req.query.fields.split(',') : [];
 
-    if (fieldType === Number && /\d/.test(searchTerm)) {
-      // Field is a number and search term contains a number
-      const condition = { [field]: Number(searchTerm) };
-      const matchingRecords = await model.find(condition).select('_id');
-      uniqueIds.push(...matchingRecords.map((record) => record._id));
-    } else if (fieldType === String) {
-      // Field is a string
-      const condition = { [field]: { $regex: new RegExp(searchTerm, 'i') } };
-      const matchingRecords = await model.find(condition).select('_id');
-      uniqueIds.push(...matchingRecords.map((record) => record._id));
-    }
+  let fields = fieldsArray.length === 0 ? {} : { $or: [] };
+  for (const field of fieldsArray) {
+    fields.$or.push({ [field]: { $regex: new RegExp(req.query.q, 'i') } });
   }
 
-  const deduplicatedIds = [...new Set(uniqueIds)];
+  if (req.query.populatedFields) {
+    for (const field of JSON.parse(req.query.populatedFields)) {
+      const foreignModel = mongoose.model(field.model);
 
-  return deduplicatedIds;
-};
+      const foreignIds = await foreignModel
+        .find({
+          [field.foreignField]: { $regex: new RegExp(req.query.q, 'i') },
+        })
+        .distinct('_id');
 
-const createFilter = async (Model, query) => {
-  let filter = { removed: query.removed ? query.removed : false };
-
-  const { current, pageSize, ...rest } = query;
-  console.log(query);
-  if (query && Object.keys(query).length !== 0) {
-    for (const [key, value] of Object.entries(rest)) {
-      if (key === 'createdat') {
-        filter[key] = moment(value, 'YYYY-MM-DD').format('YYYY-MM-DD');
-      } else if (key === 'startTime') {
-        filter['createdAt'] = {
-          $gte: moment(rest.startTime, 'YYYY-MM-DD').format('YYYY-MM-DD'),
-          $lte: moment(rest.endTime, 'YYYY-MM-DD').format('YYYY-MM-DD'),
-        };
-      } else if (value === 'true' || value === 'false') {
-        console.log('object');
-        filter[key] = value;
-      } else if (value === true || value === false) {
-        console.log('object');
-        filter[key] = value;
-      } else if (key === 'keyword' && value !== '') {
-        const schema = Model.schema.obj;
-        const orConditions = [];
-        for (const field of Object.keys(schema)) {
-          if (schema[field].ref && isNaN(Number(value))) {
-            const refModel = mongoose.model(schema[field].ref);
-            const refConditions = Object.keys(refModel.schema.obj);
-            const refIds = await findMatchingIds(refModel, refConditions, value);
-            orConditions.push({ [field]: { $in: refIds } });
-          } else if (schema[field].type === Number && !isNaN(Number(value))) {
-            orConditions.push({ [field]: Number(value) });
-          } else if (schema[field].type === String) {
-            console.log('strings');
-            orConditions.push({
-              [field]: { $regex: new RegExp(value?.toString(), 'i') },
-            });
-          }
-        }
-
-        if (orConditions.length > 0) {
-          const keywordFilter = { $or: orConditions };
-          // Merge keywordFilter into the main filter
-          Object.assign(filter, keywordFilter);
-        }
-      } else if (
-        value !== 'true' &&
-        value !== 'false' &&
-        key !== 'startTime' &&
-        key !== 'endTime' &&
-        value !== ''
-      ) {
-        if (isValidObjectId(value)) {
-          filter[key] = new ObjectId(value);
-        } else if (!isNaN(value)) {
-          filter[key] = Number(value);
-        } else {
-          filter[key] = { $regex: new RegExp(value, 'i') };
-        }
+      if (foreignIds.length > 0) {
+        fields.$or.push({ [field.localField]: { $in: foreignIds } });
       }
     }
   }
-  return filter;
-};
+  let additionalFilter = {};
+  if (req.query.filter?.length > 0) {
+    additionalFilter = handleAdditionalFilter(req.query.filter);
+  }
+  const resultsPromise = Model.find({
+    removed: false,
+    [filter]: equal,
+    ...fields,
+    ...additionalFilter, // Add the additional filter to the query
+  })
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortValue })
+    // .populate('company', 'name')
+    .exec();
 
-const getCountByStatuses = async (Model, statuses) => {
-  const counts = await Promise.all(statuses.map((status) => Model.countDocuments({ status })));
-  return statuses.map((status, index) => ({ status, count: counts[index] }));
-};
-const paginatedList = async (userModel, req, res) => {
-  const Model = mongoose.model(userModel);
+  // Counting the total documents
+  const countPromise = Model.countDocuments({
+    removed: false,
+    [filter]: equal,
+    ...fields,
+    ...additionalFilter, // Add the additional filter to the query
+  });
 
-  try {
-    const filter = await createFilter(Model, req.query);
-    const { page, pageSize, skip } = getPagination(req.query.current, req.query.pageSize);
-    delete filter.removed;
-    delete filter.items;
-    delete filter.page;
-    console.log(filter);
-    const [data, total, Today, statuses] = await Promise.all([
-      Model.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(pageSize)
-        .populate('power', 'title'),
-      Model.countDocuments(filter),
-      Model.countDocuments(filter).where('createdat').equals(moment().format('YYYY-MM-DD')),
-      Model.distinct('status'),
-    ]);
+  // Resolving both promises
+  const [result, count] = await Promise.all([resultsPromise, countPromise]);
 
-    const statusCount = await getCountByStatuses(Model, statuses);
-    const statusCountsWithToday = [
-      { status: 'All', count: 0 },
-      { status: 'Today', count: Today },
-      ...statusCount,
-    ];
+  // Calculating total pages
+  const pages = Math.ceil(count / limit);
 
-    const message = total > 0 ? 'Successfully found all documents' : 'Collection is Empty';
-    const success = total > 0;
-    console.log(data);
-    const pagination = { page, pages: pageSize, count: total };
-    return res.status(success ? 200 : 203).json({
-      success,
-      result: data,
+  // Getting Pagination Object
+  const pagination = { page, pages, count };
+  if (count > 0) {
+    return res.status(200).json({
+      success: true,
+      result,
       pagination,
-      statusCountsWithToday,
-      message,
+      message: 'Successfully found all documents',
     });
-  } catch (err) {
-    console.error('Error:', err);
-    return res.status(500).json({
-      success: false,
+  } else {
+    return res.status(203).json({
+      success: true,
       result: [],
-      page: 1,
-      pageSize: 10,
-      count: 0,
-      statusCountsWithToday: [],
-      message: `Oops, there is an error: ${err.message}`,
+      pagination,
+      message: 'Collection is Empty',
     });
   }
+};
+
+// Function to handle additional filter conditions
+const handleAdditionalFilter = (query) => {
+  const additionalFilter = {};
+
+  for (const [key, value] of Object.entries(JSON.parse(query))) {
+    console.log(key, value);
+    if (key === 'createdat') {
+      additionalFilter[key] = moment(value, 'YYYY-MM-DD').format('YYYY-MM-DD');
+    } else if (key === 'startTime') {
+      additionalFilter['createdAt'] = {
+        $gte: moment(query.startTime, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        $lte: moment(query.endTime, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      };
+    } else if (value === 'true' || value === 'false') {
+      additionalFilter[key] = value === 'true';
+    } else if (value === true || value === false) {
+      additionalFilter[key] = value;
+    } else if (
+      value !== 'true' &&
+      value !== 'false' &&
+      key !== 'startTime' &&
+      key !== 'endTime' &&
+      value !== ''
+    ) {
+      if (isValidObjectId(value)) {
+        additionalFilter[key] = new ObjectId(value);
+      } else if (!isNaN(value)) {
+        additionalFilter[key] = Number(value);
+      } else {
+        additionalFilter[key] = { $regex: new RegExp(value, 'i') };
+      }
+    }
+  }
+  console.log(additionalFilter);
+  return additionalFilter;
 };
 
 module.exports = paginatedList;

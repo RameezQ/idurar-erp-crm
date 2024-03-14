@@ -11,6 +11,7 @@ export default function Lead() {
     displayLabels: ['name'],
     searchFields: 'name',
   };
+
   const deleteModalLabels = ['name'];
 
   const Labels = {

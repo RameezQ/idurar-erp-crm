@@ -9,6 +9,12 @@ mongoose.connect(process.env.DATABASE);
 
 async function setupApp() {
   try {
+    const Company = require('../models/appModels/Company'); // Import the Company model
+    const newCompany = await new Company({
+      name: 'ABC Company',
+    }).save();
+
+    console.log('👍 Company created: Done!');
     const Admin = require('../models/coreModels/Admin');
     const AdminPassword = require('../models/coreModels/AdminPassword');
     const newAdminPassword = new AdminPassword();
@@ -23,6 +29,7 @@ async function setupApp() {
       surname: 'Admin',
       enabled: true,
       role: 'owner',
+      createdByCompany: newCompany?._id,
     };
     const result = await new Admin(demoAdmin).save();
 

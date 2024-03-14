@@ -1,3 +1,5 @@
+// import FilterSearch from './FilterSearch';
+
 export function get(obj, key) {
   return key.split('.').reduce(function (o, x) {
     return o === undefined || o === null ? o : o[x];
@@ -35,7 +37,9 @@ export function has(obj, key) {
     return true;
   });
 }
-
+// export const MyFilterSelect = (props) => {
+//   return <FilterSearch {...props} />;
+// };
 /* 
  convert indexes to properties
 */

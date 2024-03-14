@@ -11,7 +11,7 @@ const search = async (Model, req, res) => {
   //     .end();
   // }
   const fieldsArray = req.query.fields ? req.query.fields.split(',') : ['name'];
-
+  console.log('object');
   const fields = { $or: [] };
 
   for (const field of fieldsArray) {

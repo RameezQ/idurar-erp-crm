@@ -80,7 +80,7 @@ function FixHeaderPanel({ config }) {
     <>
       <Row gutter={12}>
         <Col className="gutter-row" span={24}>
-          <h1 style={{ fontSize: 20, marginBottom: 20 }}>{config.PANEL_TITLE}</h1>
+          <h1 style={{ fontSize: 20, marginBottom: 5 }}>{config.PANEL_TITLE}</h1>
         </Col>
       </Row>
       <Row gutter={8}>

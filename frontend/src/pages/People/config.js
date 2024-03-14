@@ -17,6 +17,12 @@ export const fields = {
     displayLabels: ['name'],
     searchFields: 'name',
     dataIndex: ['company', 'name'],
+    key: 'company',
+    selectProps: {
+      fields: 'name',
+      route: `/company/search`,
+      name: 'name',
+    },
   },
   country: {
     type: 'country',

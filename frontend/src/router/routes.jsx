@@ -11,7 +11,7 @@ const Inventory = lazy(() => import('@/pages/Inventory'));
 const Order = lazy(() => import('@/pages/Order'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
 const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
-
+const Fond = lazy(() => import('@/pages/Fond/index'));
 const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead'));
 const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate'));
 const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment'));
@@ -213,6 +213,14 @@ let routes = {
       path: '/offer/create',
       element: <OfferCreate />,
     },
+    {
+      path: '/fond',
+      element: <Fond />,
+    },
+    // {
+    //   path: '/fond/create',
+    //   element: <OfferCreate />,
+    // },
     {
       path: '/offer/read/:id',
       element: <OfferRead />,

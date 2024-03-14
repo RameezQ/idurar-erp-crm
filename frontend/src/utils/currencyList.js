@@ -145,8 +145,9 @@ const currencyFlag = [
 ];
 
 export const currencyOptions = (currencyList) => {
-  return currencyList.map((x) => {
+  return currencyList.map((x, index) => {
     return {
+      key: index,
       value: x.currency_code,
       label:
         (currencyFlag.find((currency) => currency.currency_code === x.currency_code)?.flag ||

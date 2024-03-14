@@ -139,7 +139,11 @@ export default function AutoCompleteAsync({
           {labels(optionField)}
         </Select.Option>
       ))}
-      {withRedirect && <Select.Option value={addNewValue.value}>{addNewValue.label}</Select.Option>}
+      {withRedirect && (
+        <Select.Option value={addNewValue.value} >
+          {addNewValue.label}
+        </Select.Option>
+      )}
     </Select>
   );
 }

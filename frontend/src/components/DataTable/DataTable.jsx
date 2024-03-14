@@ -10,8 +10,9 @@ import {
   ArrowLeftOutlined,
   FileOutlined,
   FilterOutlined,
+  FilterTwoTone,
 } from '@ant-design/icons';
-import { Dropdown, Table, Button, Input, Form, Row, Col } from 'antd';
+import { Dropdown, Table, Button, Input, Form, Row, Col, Tooltip, Space } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -112,6 +113,8 @@ export default function DataTable({ config, extra = [] }) {
     {
       title: '',
       key: 'action',
+      hideInSearch: true,
+      width: 50,
       fixed: 'right',
       render: (_, record) => (
         <Dropdown
@@ -163,7 +166,17 @@ export default function DataTable({ config, extra = [] }) {
 
   const filterTable = (e) => {
     const value = e.target.value;
-    const options = { keyword: value, fields: searchConfig?.searchFields || '' };
+    const options = {
+      q: value,
+      fields: searchConfig?.searchFields || '',
+      populatedFields: searchConfig.populatedFields || [],
+    };
+    dispatch(crud.list({ entity, options }));
+  };
+  const searchTable = (e) => {
+    const options = {
+      filter: JSON.stringify(e),
+    };
     dispatch(crud.list({ entity, options }));
   };
 
@@ -171,17 +184,18 @@ export default function DataTable({ config, extra = [] }) {
     dispatch(crud.list({ entity }));
   };
 
-  // useEffect(() => {
-  //   const controller = new AbortController();
-  //   dispatcher();
-  //   return () => {
-  //     controller.abort();
-  //   };
-  // }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    dispatcher();
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   const langDirection = useSelector(selectLangDirection);
   const [open, setOpen] = useState(false);
   const ref = useRef();
+
   return (
     <>
       <PageHeader
@@ -196,15 +210,6 @@ export default function DataTable({ config, extra = [] }) {
             placeholder={translate('search')}
             allowClear
           />,
-          // <Button
-          //   key={'12rfv'}
-          //   type="primary"
-          //   ghost
-          //   icon={<FilterOutlined />}
-          //   onClick={() => setOpen(true)}
-          // >
-          //   Filter
-          // </Button>,
           <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
             {translate('Refresh')}
           </Button>,
@@ -212,7 +217,7 @@ export default function DataTable({ config, extra = [] }) {
           <AddNewItem key={`${uniqueId()}`} config={config} />,
         ]}
         style={{
-          padding: '20px 0px',
+          padding: '1px 0px',
           direction: langDirection,
         }}
       ></PageHeader>
@@ -226,16 +231,61 @@ export default function DataTable({ config, extra = [] }) {
         dataSource={dataSource}
         pagination={pagination}
         loading={listIsLoading}
-        toolBarRender={false}
+        search={open}
+        filter={open}
+        // toolBarRender={false}
         onChange={handelDataTableLoad}
         scroll={{ x: true }}
-        request={async (params) => {
+        toolBarRender={(a, e) => (
+          <Space wrap>
+            <Tooltip title={open ? 'Clear Filters' : 'Show Filters'}>
+              <Button
+                type="primary"
+                ghost
+                size='small'
+                key={'reset'}
+                onClick={() => setOpen(!open)}
+                icon={open ? <FilterTwoTone /> : <FilterOutlined />}
+              />
+            </Tooltip>
+          </Space>
+        )}
+        // search={{
+        //   defaultCollapsed: false,
+        //   optionRender: (searchConfig, formProps, dom) => [
+        //     // ...dom.reverse(),
+        //     <Button
+        //       key="out"
+        //       onClick={() => {
+        //         const values = searchConfig?.form?.getFieldsValue();
+        //         const nonEmptyValues = Object.fromEntries(
+        //           Object.entries(values || {}).filter(
+        //             ([key, value]) => value !== '' && value !== undefined
+        //           )
+        //         );
+        //         console.log(nonEmptyValues);
+        //         searchTable(nonEmptyValues);
+        //       }}
+        //     >
+        //       Search
+        //     </Button>,
+        //   ],
+        // }}
+        request={async (params, { sort, filter }) => {
+          delete params.current;
+          delete params.pageSize;
           const options = {
             page: params.current || 1,
             items: params.pageSize || 10,
-            keyword: params.keyword || '',
-            ...params,
           };
+          const nonEmptyValues = Object.fromEntries(
+            Object.entries(params || {}).filter(
+              ([key, value]) => value !== '' && value !== undefined
+            )
+          );
+          if (Object.keys(nonEmptyValues).length > 0) {
+            options.filter = JSON.stringify({ ...nonEmptyValues });
+          }
 
           dispatch(crud.list({ entity, options }));
           return {

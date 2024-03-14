@@ -332,6 +332,10 @@ const lang = {
   contact: 'Contact',
   website: 'Website',
   lead_list: 'Lead List',
+  //new
+  fond_List: 'Fond_List',
+  add_new_fond: 'Add New Fond',
+  //
   add_new_lead: 'Add New Lead',
   source: 'Source',
   notes: 'Notes',
@@ -449,7 +453,7 @@ const lang = {
   enter_code: 'Enter Code',
   offers: 'Offers',
   proforma_invoices: 'Proforma Invoices',
-  search:"search"
+  search: 'search',
 };
 
 export default lang;
